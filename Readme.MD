@@ -14,5 +14,12 @@ pre built bin and hex files flashable via st-link / open ocd and other found in
 https://github.com/darkspr1te/mkstft35_V1_open_bootloader/tree/master/buildroot/SDCARD
 
 
+
+##Few bugs/warnings 
+system does not rename firmware file so it will reflash on reboot. yet!
+system does not copy fonts/icons onto system(spi flash). yet!
+OTA updates via esp2866 feature disabled until i can find a good vector for activation. 
+
+
 darkspr1te 
 
