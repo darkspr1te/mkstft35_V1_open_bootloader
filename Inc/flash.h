@@ -3,7 +3,7 @@
 #include "stm32f4xx.h"
 #include "stdint.h"
 #include "board.h"
-#include "stm32_adafruit_lcd.h"
+#include "ILI9488.h"
 typedef struct {
     uint8_t entry_sign;
     uint32_t crc;
@@ -26,7 +26,7 @@ typedef enum
 } FlashResult;
 
 FlashResult flash(const char *fname);
-
+FlashResult flash_rename(const char *fname,const char *nname );
 #define _SECTOR_SIZE 0x3fff
 #define FLASH_PAGE_SIZE 0x3fff
 #define BOOT_SECT 0xC000

@@ -3,20 +3,17 @@
 #include "fatfs.h"
 #include "board.h"
 #include "flash.h"
-#include "w25qxx.h"
+//#include "w25qxx.h"
 
-#include "stm32_adafruit_lcd.h"
-#include "stm32_adafruit_ts.h"
-#include "ts.h"
-#include "lcd_driver.h"
+
 FATFS SDFatFS; /* File system object for SD logical drive */
 extern SD_HandleTypeDef hsd;
 char SDPath[4];
-extern w25qxx_t w25qxx;
+//extern w25qxx_t w25qxx;
 typedef void (*pFunction)(void);
 extern SPI_HandleTypeDef hspi1;
 static FILINFO File_info;
-char txt_buf[70];
+
 void dump_w25qxx();
 
 
@@ -44,7 +41,7 @@ void firmware_run(void) {
     appEntry();
 }
 
-static void old_MX_SPI1_Init(void)
+void MX_SPI1_Init(void)
 {
 
  
@@ -54,7 +51,7 @@ static void old_MX_SPI1_Init(void)
   hspi1.Init.DataSize = SPI_DATASIZE_8BIT;
   hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
-  hspi1.Init.NSS = SPI_NSS_HARD_OUTPUT;
+  hspi1.Init.NSS = SPI_NSS_SOFT;
   hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_4;
   hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
@@ -109,112 +106,80 @@ void bootloader_start()
  
     if (!result == FR_OK)
     {
-      BSP_LCD_SetTextColor(LCD_COLOR_GREEN);
-      snprintf(txt_buf,50,"%s",BOOTLOAD_SPLASH);
-      BSP_LCD_SetTextColor(LCD_COLOR_GREEN);
-     BSP_LCD_DisplayStringAt(1,12,(uint8_t *)txt_buf,LEFT_MODE);
-      snprintf(txt_buf,30,"Bootloader Version %s",BOOTLOADER_VERSION);
-      BSP_LCD_SetTextColor(LCD_COLOR_YELLOW);
-     BSP_LCD_DisplayStringAt(1,12*2+1,(uint8_t *)txt_buf,LEFT_MODE);
-      snprintf(txt_buf,70,"Patrons:- %s",BOOTLOADER_PATRONS);
-      BSP_LCD_SetTextColor(LCD_COLOR_GREEN);
-     BSP_LCD_DisplayStringAt(1,12*3+1,(uint8_t *)txt_buf,LEFT_MODE);
-
-    /*TFT_DrawString((9*32),0,BOOTLOAD_SPLASH,Green);
+    TFT_DrawString((9*32),0,BOOTLOAD_SPLASH,Green);
     TFT_DrawString((9*32),320,BOOTLADER_VERSION,Yellow);
     TFT_DrawString((9*33),0,"Patrons:",LightGrey);
     TFT_DrawString((9*33),66,BOOTLOADER_PATRONS,Yellow);
     TFT_DrawString((9*34),00,buf,Green);
-   */
+   
     }
+  #if 1
     if (result == FR_OK)
   {
   
     /*
     Check for vanilla firmware first 
     */
+  
       if (check_fName(VANILLA_CURR)==0)
       {
         printf("SD Open Success Flashing Vanilla\r\n");
         line=2;
-        snprintf(txt_buf,30,"SD Open Success Flashing Vanilla");
-        BSP_LCD_SetTextColor(LCD_COLOR_GREEN);
-        BSP_LCD_DisplayStringAt(1,LCD_HT-(12*2),(uint8_t *)txt_buf,LEFT_MODE);
-       // TFT_DrawString((9*line),0,"SD Open Success Flashing Vanilla" ,Green);
+        TFT_DrawString((9*line),0,"SD Open Success Flashing Vanilla" ,Green);
         FlashResult Flash_status = flash(VANILLA_CURR);
+        //VANILLA_NEW
+        //FlashResult 
+        Flash_status = flash_rename(VANILLA_CURR,VANILLA_NEW);
+      if (Flash_status != FR_OK)
+        {TFT_DrawString((10*line),0,"file rename fail" ,Green);}
       }
       else 
       if (check_fName(CURR_NAME)==0)
       {
         printf("SD Open Success Flashing MKSRobin Crypto\r\n");
         line=2;
-     //   TFT_DrawString((9*line),0,"SD Open Success Flashing MKSRobin Crypto" ,Green);
-        FlashResult Flash_status = flash_crypt(CURR_NAME);
+        TFT_DrawString((9*line),0,"SD Open Success Flashing MKSRobin Crypto" ,Green);
+        FlashResult Flash_status;
+        Flash_status = flash_crypt(CURR_NAME);
+        Flash_status = flash_rename(CURR_NAME,NEW_NAME);
+        if (Flash_status != FR_OK)
+        {TFT_DrawString((10*line),0,"file rename fail" ,Green);}
+        HAL_Delay(5);
       }
       
       FlashResult Flash_status = 0;
-      //flash_crypt(CURR_NAME);
+
       line=4;
-     // printf("flash result %d\r\n",Flash_status);
       if (Flash_status == 0)
       {
-        //  TFT_DrawString((9*line),0,"Flash Success" ,Green);
-        }
+          TFT_DrawString((9*line),0,"Flash Success" ,Green);}
       else 
       {
-        //  TFT_DrawString((9*line),0,"Flash Fail" ,Red);
-        }
+          TFT_DrawString((9*line),0,"Flash Fail" ,Red);}
   } 
   else {
       line=4;
-      snprintf(txt_buf,30,"SD Open 0:/");
-      BSP_LCD_SetTextColor(LCD_COLOR_GREEN);
-       BSP_LCD_DisplayStringAt(1,LCD_HT-(12*2),(uint8_t *)txt_buf,LEFT_MODE);
-       snprintf(txt_buf,30,"Fail - SD Card not found/file not found");
-      BSP_LCD_SetTextColor(LCD_COLOR_RED);
-       BSP_LCD_DisplayStringAt(100,LCD_HT-(12*2),(uint8_t *)txt_buf,LEFT_MODE);
-    //   TFT_DrawString((9*line),0,"SD Open 0:/" ,Green);
-    //   TFT_DrawString((9*line),95,"Fail - SD Card not found/file not found" ,Red);
+       TFT_DrawString((9*line),0,"SD Open 0:/" ,Green);
+       TFT_DrawString((9*line),95,"Fail - SD Card not found/file not found" ,Red);
        }
+#endif
 line=5;
-//TFT_DrawString((9*line),0,"*****   Booting Firmware ******" ,Green);
-snprintf(txt_buf,30,"*****   Booting Firmware ******");
-BSP_LCD_SetTextColor(LCD_COLOR_GREEN);
-BSP_LCD_DisplayStringAt(1,LCD_HT-(12*10),(uint8_t *)txt_buf,CENTER_MODE);
-
-printf("Init w25qxx device\r\n");
-//MX_SPI1_Init();
-//HAL_Delay(3000);
-//TFT_Switch_Init();
-W25qxx_Init();
-//HAL_Delay(3000);
-//TFT_Clear(Black);
+TFT_DrawString((9*line),0,"*****   Booting Firmware ******" ,Green);
+HAL_GPIO_WritePin(LCD_BL_PORT,LCD_BL_PIN,GPIO_PIN_SET);
 int pic_cnt=0;
- DRAW_LOGO();
- printf("logo done");
-while(0)
-{
- 
-  HAL_Delay(3000);
-// test_pic();
- 
- 
-}
-//printf("w25qxx ID %d\r\n",W25qxx_ReadID());
-/*while (1)
-{
-  HAL_Delay(100);
-  HAL_GPIO_WritePin(GPIOB,GPIO_PIN_9,GPIO_PIN_RESET);
-  HAL_Delay(100);
-  HAL_GPIO_WritePin(GPIOB,GPIO_PIN_9,GPIO_PIN_SET);
-  printf("gpio pin toggle");
-}*/
-//dump_w25qxx();
-//printf("halt debug");
-//HAL_Delay(1000);
-//debug halt 
+#if 0
+MX_SPI1_Init();
+W25qxx_Init();
+//spi_flash_dump();
+HAL_Delay(100);
+DRAW_LOGO();
+#endif
+#if 0
+//uint8_t drawicon_preview(char *path,int xsize_small,int ysize_small,int xsize_big,int ysize_big,char sel)
+drawicon_preview("mkstft35.bin",10,10,20,20,1);
+//drawicon_preview("0:/mkstft35.bin",10,10,20,20,1);
 //while(1);
-
+#endif
 firmware_run();
   
   while(1)

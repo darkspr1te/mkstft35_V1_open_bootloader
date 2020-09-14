@@ -4,7 +4,7 @@
 #include "stm32f4xx_hal_flash.h"
 #include "stm32f4xx_hal_flash_ex.h"
 #include "flash.h"
-#include "stm32_adafruit_lcd.h"
+#include "ILI9488.h"
 
 
 extern unsigned int _isr_real;
@@ -99,6 +99,15 @@ HAL_StatusTypeDef flashWrite(uint32_t position, uint8_t *data, uint32_t size)
 	}
 	return res;
 }
+FlashResult flash_rename(const char *fname,const char *nname )
+{
+  FRESULT res = f_stat(fname, &info);
+  if (res != FR_OK)
+  while(1);
+	//	return FLASH_FILE_NOT_EXISTS;
+ res = f_rename(fname,nname);
+ return res;
+}
 
 FlashResult flash(const char *fname)
 {
@@ -150,11 +159,7 @@ FlashResult flash(const char *fname)
       //printf("postion %x\r",position);
       #endif
       snprintf(txt_buf,30,"Flashing @ 0x%x",position);
-
-  BSP_LCD_SetTextColor(LCD_COLOR_WHITE);
- BSP_LCD_DisplayStringAt(1,BSP_LCD_GetYSize()-(12*5),(uint8_t *)txt_buf,LEFT_MODE);
-  
-//      TFT_DrawString((9*3),0,(uint8_t *)txt_buf,White);
+      TFT_DrawString((9*3),0,(uint8_t *)txt_buf,White);
      position += bufferLen;
 
 	} while (bufferLen != 0);
@@ -224,7 +229,9 @@ FlashResult flash_crypt(const char *fname)
         {
           buffer[i]=buffer[i] ^ key[i&31];
         }
-      } else 
+      } 
+      /*
+      else 
       if ((ADDR_FLASH_SECTOR_3-position)>=0x140||(ADDR_FLASH_SECTOR_3-position)<0x7940)
       {
         printf("Using Stage two decrypt raw position %x\n\r", position);
@@ -242,9 +249,10 @@ FlashResult flash_crypt(const char *fname)
           buffer[i]=buffer[i] ^ key[i&31];
         }
       }
-      
+*/      
 
     }
+    /*
     else
     {
       //printf("no decrypt\n\r");
@@ -257,15 +265,14 @@ FlashResult flash_crypt(const char *fname)
         }
       }
     }
+    */
   #ifdef DEBUG  
   printf("postion %x\r",position);
   #endif
-  snprintf(txt_buf,30,"Flashing @ 0x%x",position);
-  BSP_LCD_SetTextColor(LCD_COLOR_WHITE);
- BSP_LCD_DisplayStringAt(1,BSP_LCD_GetYSize()-(12*5),(uint8_t *)txt_buf,LEFT_MODE);
-  //TFT_DrawString((9*3),0,(uint8_t *)txt_buf,White);
 
-    //BSP_LCD_GetYSize()-(12*5)
+  snprintf(txt_buf,30,"Flashing @ 0x%x",position);
+  TFT_DrawString((9*3),0,(uint8_t *)txt_buf,White);
+    
 
 		if (HAL_OK != flashWrite(position, buffer, bufferLen))
 			return FLASH_RESULT_FLASH_ERROR;
@@ -311,9 +318,7 @@ uint8_t flash_erase(uint32_t from_addr, uint32_t to_addr)
   char       txt_buf[60];
   printf("Flash Erase Start\r\n");
   snprintf(txt_buf,60,"Flash Erase @ 0x%x To 0x%x",from_addr,to_addr);
-  //TFT_DrawString((9*3),0,(uint8_t *)txt_buf,L);
-  BSP_LCD_SetTextColor(LCD_COLOR_WHITE);
- BSP_LCD_DisplayStringAt((9*3),0,(uint8_t *)txt_buf,LEFT_MODE);
+  TFT_DrawString((9*3),0,(uint8_t *)txt_buf,White);
 __HAL_FLASH_CLEAR_FLAG(FLASH_FLAG_EOP | FLASH_FLAG_OPERR | FLASH_FLAG_WRPERR | FLASH_FLAG_PGAERR | FLASH_FLAG_PGPERR | FLASH_FLAG_PGSERR);
 
   FirstSector = GetSector(from_addr);
@@ -328,9 +333,7 @@ __HAL_FLASH_CLEAR_FLAG(FLASH_FLAG_EOP | FLASH_FLAG_OPERR | FLASH_FLAG_WRPERR | F
 
   if (HAL_FLASHEx_Erase(&EraseInitStruct, &SectorError) != HAL_OK)
     return 99;
-    BSP_LCD_SetTextColor(LCD_COLOR_BLACK);
-   BSP_LCD_DisplayStringAt((9*3),0,(uint8_t *)txt_buf,LEFT_MODE);
-  //TFT_DrawString((9*3),0,(uint8_t *)txt_buf,Black);
+  TFT_DrawString((9*3),0,(uint8_t *)txt_buf,Black);
   printf("Flash erase complete\r\n");
 return res;
 }

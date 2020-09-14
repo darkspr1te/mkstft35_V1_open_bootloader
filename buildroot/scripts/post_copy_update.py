@@ -1,7 +1,7 @@
 Import("env")
 import shutil 
 from os.path import basename, isdir, join
-#print "Post build scripts"
+print("Post build scripts")
 
 def after_build(source, target, env):
     source_filename = env['PROJECT_BUILD_DIR'] + "/" + env['PIOENV'] + "/" + env['PROGNAME'] + ".bin"
